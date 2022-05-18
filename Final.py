@@ -13,14 +13,14 @@ import datetime as dt
 
 # from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import Normalizer
+# from sklearn.preprocessing import StandardScaler
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.preprocessing import Normalizer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 
 # import tensorflow as tf
-# from tensorflow	import keras
+# from tensorflow import keras
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.callbacks import EarlyStopping
 # from tensorflow.keras import layers

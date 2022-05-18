@@ -1,5 +1,5 @@
-from Final.py import climate
-from Final.py import train_data, test_data, train_labels, test_labels
+from Final import climate
+from Final import train_data, test_data, train_labels, test_labels
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +8,10 @@ import seaborn as sns
 import time                                          
 import datetime as dt
 
+import sklearn as sk
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import HalvingGridSearchCV
 
 
 #We need to convert our labels to someting RandomForestClassifier can understand.
@@ -19,27 +22,34 @@ from sklearn.ensemble import RandomForestClassifier
 # rf_labels = le.fit_transform(rf_labels)
 
 
+RFC = RandomForestClassifier(verbose = 1, warm_start = False, max_features = None, 
+                             max_depth = None, criterion = 'gini',
+                             min_samples_split = 35, n_estimators = 80)
+
+# Beautiful, so I got my best parameters from the grid search, you can see the 
+# best parameters in the RFC call. Lets fit it now. 
 
 
+# parameters = {'n_estimators': [50, 100, 150, 200], 
+#               'max_depth': [None, 25, 50, 100], 
+#               'max_features': [None, 4, 6, 8, 10],
+#               'min_samples_split': [2, 4, 10, 25, 75, 125, 150, 200],
+#               'criterion': ['gini']
+#               }
 
-parameters = {'n_estimators': [1, 25, 75, 125, 200], 
-              'max_depth': [None, 25, 50, 100], 
-              'max_features': [None, 4, 6, 8, 10]}
-
-# grid = GridSearchCV(RFC, parameters)
+# I JUST found out about halving grid search which gives as good or  better 
+# results quicker, so we are DEFINITELY going to use this from now on.
+# grid = HalvingGridSearchCV(RFC, parameters)
 # results = grid.fit(train_data, train_labels)
 # print(results.best_params_)
-# I need to let this run, but it will take upwards of 8+ hours. Will let it run
-# overnight.
+# print(results.best_estimator_)
+# print(results.best_score_)
 
 
 
-# RFC = RandomForestClassifier(n_estimators = 188, random_state = 11, 
-#                                  verbose = 1, warm_start = True)
-
-# RFC.fit(train_data, train_labels)
-# score = RFC.score(test_data, test_labels)
-
-
-# print(score)
-# print(max(score))
+RFC.fit(train_data, train_labels)
+score = RFC.score(test_data, test_labels)
+print(score)
+#So it looks like the RFC has a 75% likelihood that it is correct. That is virtually
+# the exact same likelihood that we got with the GBC. Lets try a few more models
+# and see which one will give us the best results. 

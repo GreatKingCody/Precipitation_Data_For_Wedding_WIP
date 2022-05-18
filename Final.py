@@ -10,15 +10,14 @@ import datetime as dt
 # import matplotlib.ticker as mtick
 
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import GradientBoostingClassifier
+
 # from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import LabelEncoder
 
 # import tensorflow as tf
 # from tensorflow	import keras
@@ -180,11 +179,6 @@ climate.min_temp = climate.min_temp.fillna(np.mean(climate.min_temp))
 # That means I will need to probably build both a MultiLabelClassifier as well as a
 # Tensorflow model to properly predict the data.
 
-RFC = RandomForestClassifier()
-minmax = MinMaxScaler()
-std = StandardScaler()
-normal = Normalizer()
-le = LabelEncoder()
 
 
 #I just realized I forgot to add the weather attribute columns. Let me do that
@@ -215,167 +209,12 @@ climate.total_precipitation.fillna(0, inplace = True)
 
 #Feature and label creation. FINALLY.
 rf_features = climate[['year', 'month', 'day', 'max_temp', 'min_temp']].to_numpy()
-# rf_labels = climate.total_precipitation.to_numpy()
-
-#We need to convert our labels to someting RandomForestClassifier can understand.
-# It does not understand continuious, so while I could convert it to an int, I dont
-# think that is statistically the best way to do that. Sklearn as a preprocessing
-# model for label encoding, which I used below to relabel the labels into something
-# it understands and can read in on.
-# rf_labels = le.fit_transform(rf_labels)
-
 climate.total_precipitation = \
     climate.total_precipitation.apply([lambda x: 1 if x > 0 else 0])
 rf_labels = climate.total_precipitation
 train_data, test_data, train_labels, test_labels =\
 train_test_split(rf_features, rf_labels, test_size = 0.2)
 
+# I am going to stop on this file here, and seperate it out into
+# other files to keep it a little more organized. 
 
-
-parameters = {'n_estimators': [1, 25, 75, 125, 200], 
-              'max_depth': [None, 25, 50, 100], 
-              'max_features': [None, 4, 6, 8, 10]}
-
-# grid = GridSearchCV(RFC, parameters)
-# results = grid.fit(train_data, train_labels)
-# print(results.best_params_)
-# I need to let this run, but it will take upwards of 8+ hours. Will let it run
-# overnight.
-
-
-
-# RFC = RandomForestClassifier(n_estimators = 188, random_state = 11, 
-#                                  verbose = 1, warm_start = True)
-
-# RFC.fit(train_data, train_labels)
-# score = RFC.score(test_data, test_labels)
-
-
-# print(score)
-# print(max(score))
-
-
-
-
-# Alright, so we are going to start a grid search first, and then we will print our
-# test score. We are going to do a GBC because it is a very accurate ML model.
-
-
-# First thing is to create the parameters for the grid search.
-# parameters = {'n_estimators': [2, 10, 25, 50, 75, 100, 150, 200, 210],
-#               'learning_rate': [.0001, .001, .01, .1, .15, 0.19, .2, .21, .25, .3],
-#               'min_samples_split': [2, 5, 10, 25, 50, 75, 95, 100, 105, 125, 150],
-#               'max_depth': [3, 4, 5, 10, 15, 25, 50, 75, 100, 150, 200],
-#               'max_features': [1, 2, 3, 4, 5],
-#               }
-
-
-
-# After numerous gridsearch testing, below I have fit the GBC with the best parameters.
-# The run took about 8 hours to fit, so I left it all day!
-gbc = GradientBoostingClassifier(loss = 'exponential', random_state = 11, 
-                                 verbose = 0, validation_fraction = 0.2, tol = 1e-8, 
-                                 n_iter_no_change = 1000, n_estimators = 200,
-                                 learning_rate = .19, min_samples_split = 95,
-                                 max_depth = 3, max_features = 4)
-
-
-# grid = GridSearchCV(gbc, parameters)
-# results = grid.fit(train_data, train_labels)
-# print(results.best_params_)
-# print(results.best_estimator_)
-# print(results.best_score_)
-# The lines above print a few different statistics about the ML model.
-# The most important one is the .best_params_ in my opinion, it shows what had the
-# best scores. 
-
-
-# Time to officially fit!
-gbc.fit(train_data, train_labels)
-gbc_test_score = gbc.score(test_data, test_labels)
-
-
-# Alright, to predict I will need the min and max temps for the month, I could do it
-# by day, but unfortunatey that is a ton of work. 30 * each month, so I am going to 
-# pass on that one for now. 
-april_max_temp = climate.loc[climate.month == 4].max_temp.mean()
-may_max_temp = climate.loc[climate.month == 5].max_temp.mean()
-june_max_temp = climate.loc[climate.month == 6].max_temp.mean()
-sep_max_temp = climate.loc[climate.month == 9].max_temp.mean()
-oct_max_temp = climate.loc[climate.month == 10].max_temp.mean()
-april_min_temp = climate.loc[climate.month == 4].min_temp.mean()
-may_min_temp = climate.loc[climate.month == 5].min_temp.mean()
-june_min_temp = climate.loc[climate.month == 6].min_temp.mean()
-sep_min_temp = climate.loc[climate.month == 9].min_temp.mean()
-oct_min_temp = climate.loc[climate.month == 10].min_temp.mean()
-
-
-
-# Lets just print the score to check one more time
-print(gbc_test_score)
-
-
-# year, month, day, max_temp, min_temp is the order our numpy array prediction
-#should be in 
-pred_x = np.array([2023, 4, 15, april_max_temp, april_min_temp]).reshape(1, -1)
-
-
-#Okay, lets see what the probability of rain is in april!
-april_prediction = gbc.predict(pred_x)
-april_prediction_prob = gbc.predict_proba(pred_x)
-print(april_prediction)
-print(april_prediction_prob)
-# We can say in april we 75 percent sure that it will not rain! 
-# There is a 25% chance it will
-
-
-
-
-# I want to seperate my data by month, so we are going to do that to run some statistical testing. I will probably
-# also seperate by year stating at 2000 or so.
-
-def by_month(df, month):
-    return df.loc[(df.month == month)]
-
-climate_january = by_month(climate, 1)
-climate_february = by_month(climate, 2)
-climate_march = by_month(climate, 3)
-climate_april = by_month(climate, 4)
-climate_may = by_month(climate, 5)
-climate_june = by_month(climate, 6)
-climate_july = by_month(climate, 7)
-climate_august = by_month(climate, 8)
-climate_september = by_month(climate, 9)
-climate_october = by_month(climate, 10)
-climate_november = by_month(climate, 11)
-climate_december = by_month(climate, 12)
-
-# Seperating by year.
-def by_year(df, year):
-    return df.loc[(df.year == year)]
-
-climate_2000 = by_year(climate, 2000)
-climate_2001 = by_year(climate, 2001)
-climate_2002 = by_year(climate, 2002)
-climate_2003 = by_year(climate, 2003)
-climate_2004 = by_year(climate, 2004)
-climate_2005 = by_year(climate, 2005)
-climate_2006 = by_year(climate, 2006)
-climate_2007 = by_year(climate, 2007)
-climate_2008 = by_year(climate, 2008)
-climate_2009 = by_year(climate, 2009)
-climate_2010 = by_year(climate, 2010)
-climate_2011 = by_year(climate, 2011)
-climate_2012 = by_year(climate, 2012)
-climate_2013 = by_year(climate, 2013)
-climate_2014 = by_year(climate, 2014)
-climate_2015 = by_year(climate, 2015)
-climate_2016 = by_year(climate, 2016)
-climate_2017 = by_year(climate, 2017)
-climate_2018 = by_year(climate, 2018)
-climate_2019 = by_year(climate, 2019)
-climate_2020 = by_year(climate, 2020)
-climate_2021 = by_year(climate, 2021)
-climate_2022 = by_year(climate, 2022)
-
-# print(climate_2022.head())

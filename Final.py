@@ -19,15 +19,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelEncoder
 
-# import tensorflow as tf
-# from tensorflow import keras
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.callbacks import EarlyStopping
-# from tensorflow.keras import layers
-# from tensorflow.keras.layers import Dense
-# from tensorflow.keras.optimizers import Adam
-# from tensorflow.keras.metrics import Accuracy
-# from tensorflow.keras.callbacks import History
+
 # from sklearn.model_selection import train_test_split
 # from sklearn.preprocessing import StandardScaler
 # from sklearn.preprocessing import Normalizer
@@ -152,6 +144,9 @@ climate['date'] = df.date
 climate['total_precipitation'] = climate.precipitation + climate.snow +\
                                  climate.multiday_precipitation + \
                                  climate.multiday_snowfall
+tf_precipitation = climate.total_precipitation
+# I came back and added this so that I can use it for my tensorflow model
+
 climate.is_copy = False
 #Dropping the columns I just added together
 climate.drop(['precipitation', 'multiday_precipitation', 'snow',
@@ -192,7 +187,7 @@ attributes.fillna(0, inplace = True)
 attributes = attributes.astype('bool')
 
 # True/False values look ugly, so lets fix that.
-attributes.apply([lambda x: 1 if x == True else 0])
+attributes = attributes.apply([lambda x: 1 if x == True else 0])
 
 # I dont like the og column names either.
 attributes.rename(columns = {'wt01': 'fog', 'wt03': 'thunder', 'wt04': 'sleet',
@@ -201,7 +196,6 @@ attributes.rename(columns = {'wt01': 'fog', 'wt03': 'thunder', 'wt04': 'sleet',
 
 # Add climate and attributes.
 climate = pd.concat([climate, attributes], axis = 1)
-
 
 # I dont really know why I still have nan values, but they are easy to replace.
 climate.total_precipitation.fillna(0, inplace = True)
@@ -214,6 +208,7 @@ climate.total_precipitation = \
 rf_labels = climate.total_precipitation
 train_data, test_data, train_labels, test_labels =\
 train_test_split(rf_features, rf_labels, test_size = 0.2)
+
 
 # I am going to stop on this file here, and seperate it out into
 # other files to keep it a little more organized. 

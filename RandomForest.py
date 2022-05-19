@@ -48,14 +48,25 @@ RFC = RandomForestClassifier(verbose = 1, warm_start = False, max_features = Non
 
 
 
-RFC.fit(train_data, train_labels)
-score = RFC.score(test_data, test_labels)
-print(score)
+# RFC.fit(train_data, train_labels)
+# score = RFC.score(test_data, test_labels)
+# print(score)
 #So it looks like the RFC has a 75% likelihood that it is correct. I want to try
 # and also fit a Random Forest Regressor, so I am going to do that below with the
 # same steps as above
 
 
-RFR = RandomForestRegressor(verbose = 1, warm_start = True, criterion = 'absolute_error')
+RFR = RandomForestRegressor(verbose = 1, warm_start = True, 
+                            criterion = 'absolute_error', random_state = 11)
 
-parameter = {}
+parameters = {'max_depth': [None, 1, 10, 50, 100, 150, 200, 300, 500, 1000],
+              'min_samples_split': [2, 10, 50, 100, 150, 200, 300, 500, 1000],
+              'max_features': [None, 1, 'sqrt', 'log2'],
+              'n_estimators': [1, 10, 50, 100, 150, 200, 300, 500, 1000]}
+
+grid = HalvingGridSearchCV(RFR, parameters)
+results = grid.fit(train_data, train_labels)
+score = grid.score(test_data, test_labels)
+print(score)
+print(results.best_params_)
+print(results.best_score_)

@@ -187,7 +187,8 @@ attributes.fillna(0, inplace = True)
 attributes = attributes.astype('bool')
 
 # True/False values look ugly, so lets fix that.
-attributes = attributes.apply([lambda x: 1 if x == True else 0])
+attributes = attributes.mask(attributes == False, 0)
+attributes = attributes.mask(attributes == True, 1)
 
 # I dont like the og column names either.
 attributes.rename(columns = {'wt01': 'fog', 'wt03': 'thunder', 'wt04': 'sleet',
@@ -208,6 +209,7 @@ climate.total_precipitation = \
 rf_labels = climate.total_precipitation
 train_data, test_data, train_labels, test_labels =\
 train_test_split(rf_features, rf_labels, test_size = 0.2)
+
 
 
 # I am going to stop on this file here, and seperate it out into

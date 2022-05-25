@@ -5,6 +5,7 @@ import seaborn as sns
 
 import time                                          
 import datetime as dt
+from pathlib import Path
 
 # from scipy.stats import chi2_contingency
 # import matplotlib.ticker as mtick
@@ -14,15 +15,9 @@ import datetime as dt
 # from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 # from sklearn.preprocessing import StandardScaler
-# from sklearn.preprocessing import MinMaxScaler
 # from sklearn.preprocessing import Normalizer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import LabelEncoder
-
-
-# from sklearn.model_selection import train_test_split
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.preprocessing import Normalizer
 # from sklearn.metrics import r2_score
 
 
@@ -35,11 +30,15 @@ df = pd.read_csv('Hendersonville_Data.csv', low_memory = False)
 
 df.DATE = pd.to_datetime(df.DATE)
 # print(df.DATE.head())
-# I'm going to need to seperate this by the following columns: year, month, day
-# but I will address that later because I need a little bit more research into 
-# how to seperate without converting each of these to strings and filtering them.
-# I think I can use pd.query() plus a 'dt' function, and that will prevent a ton of
-# extra work on my part.
+
+'''
+I'm going to need to seperate this by the following columns: year, month, day
+but I will address that later because I need a little bit more research into 
+how to seperate without converting each of these to strings and filtering them.
+I think I can use pd.query() plus a 'dt' function, and that will prevent a ton of
+extra work on my part.
+'''
+
 
 #Let me fix fix the dtypes real quick
 # df = df.convert_dtypes()
@@ -51,9 +50,9 @@ df.DATE = pd.to_datetime(df.DATE)
 # Let's fix that.
 df.columns = df.columns.str.lower()
 # print(df.columns)
+
 # Much better. Easier to call too. Let me change some column names to give them
 # a better description of what they actually do. That means its time for the readme.
-
 
 # Okay so selenium is awful, I basically made a bot that clicked through the pages
 # to get to the readme, but it took WAY too long to execute, so I just downloaded
@@ -135,17 +134,26 @@ climate.drop('snow_depth', axis = 1, inplace = True)
 climate['date'] = df.date
 
 
-# I had a feeling that the snow was not accounted for in the precipitation column,
-# so I went ahead and looked. I also found out that I need to add most of the 
-# precipitation type columns together to get a better idea of the total, so lets
-# do that now
+
+'''
+I had a feeling that the snow was not accounted for in the precipitation column,
+so I went ahead and looked. I also found out that I need to add most of the 
+precipitation type columns together to get a better idea of the total, so lets
+do that now
+'''
+
+
+
 # print(climate.loc[44650:44700])
 
 climate['total_precipitation'] = climate.precipitation + climate.snow +\
                                  climate.multiday_precipitation + \
                                  climate.multiday_snowfall
-tf_precipitation = climate.total_precipitation
+precip_amount = climate.total_precipitation
+precip_df = pd.DataFrame(precip_amount)
+# print(precip_amount)
 # I came back and added this so that I can use it for my tensorflow model
+# as well as regression models.
 
 climate.is_copy = False
 #Dropping the columns I just added together
@@ -154,25 +162,34 @@ climate.drop(['precipitation', 'multiday_precipitation', 'snow',
               'days_in_multiday_snowfall'], axis = 1, inplace = True)
 
 
-# I want to preface this by saying there are 222 missing max_temp values,
-# and 122 missing min temp values. I am going to replace them with the mean value
-# of the column beacuse the count of total missing values are not concidered 
-# statistically significant. 
+
+'''
+I want to preface this by saying there are 222 missing max_temp values,
+and 122 missing min temp values. I am going to replace them with the mean value
+of the column beacuse the count of total missing values are not concidered 
+statistically significant. 
+'''
+
+
+
 # print(climate.isnull().sum())
 climate.max_temp = climate.max_temp.fillna(np.mean(climate.max_temp))
 climate.min_temp = climate.min_temp.fillna(np.mean(climate.min_temp))
 
 
-#Okay, so I think we can can now start a machine learning model with the cleaned data
-# I think I am going to start with something basic, but I will use a few different 
-# models and we will work our way to tensorflow. I also will probably do some 
-# statistical testing later on, but that will require me splitting the dataset 
-# by both month and year, which will be a lot of work. Also, the
-# RandomForestClassifier is not the right choice for this dataset, but I want to
-# see how well it preforms anyway. It isnt the right dataset because I need to 
-# not just predict the amount of precipitation, but also the weather conditions.
-# That means I will need to probably build both a MultiLabelClassifier as well as a
-# Tensorflow model to properly predict the data.
+
+'''
+Okay, so I think we can can now start a machine learning model with the cleaned data
+I think I am going to start with something basic, but I will use a few different 
+models and we will work our way to tensorflow. I also will probably do some 
+statistical testing later on, but that will require me splitting the dataset 
+by both month and year, which will be a lot of work. Also, the
+RandomForestClassifier is not the right choice for this dataset, but I want to
+see how well it preforms anyway. It isnt the right dataset because I need to 
+not just predict the amount of precipitation, but also the weather conditions.
+That means I will need to probably build both a MultiLabelClassifier as well as a
+Tensorflow model to properly predict the data.
+'''
 
 
 
@@ -212,6 +229,33 @@ train_test_split(rf_features, rf_labels, test_size = 0.2)
 
 
 
-# I am going to stop on this file here, and seperate it out into
-# other files to keep it a little more organized. 
+'''
+I need to write this information to a CSV so that I can open it in Power BI
+I am also going to have a separate file for data visualization so that I can
+showcase the use of seaborn. Lets start with writing to a CSV.
+'''
 
+climate_write =  pd.concat([climate, precip_df], axis = 1)
+print(climate_write.head())
+
+filepath = 'C:/Users/wbcod/Downloads/climate.csv'
+climate_write.to_csv()
+
+'''
+I am going to stop on this file here, and seperate it out into
+other files to keep it a little more organized. 
+
+
+I do want to take a second to talk abou the scikit flowmap for
+choosing the right ML model. It comes from the URL:
+https://scikit-learn.org/stable/tutorial/machine_learning_map/index.html
+Just so we are clear, I am manipulating my data so that I can showcase
+multiple ML models, and the fact that I actually do know how
+to write Python code. Just because I have a ML model
+written for this dataset does not necessarily mean that
+it is the best ML model for this data. 
+'''
+
+
+
+print()

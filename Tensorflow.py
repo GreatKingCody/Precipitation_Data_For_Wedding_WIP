@@ -1,5 +1,4 @@
-from Final import climate
-from Final import tf_precipitation
+from Final import climate_write
 
 import pandas as pd
 import numpy as np
@@ -8,8 +7,9 @@ import seaborn as sns
 
 import time                                          
 import datetime as dt
+from collections import Counter
 
-
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 from tensorflow import keras
@@ -28,37 +28,43 @@ from sklearn.preprocessing import LabelEncoder
 # the GBC and RFC classifiers. 
 
 # print(climate.columns)
-# print(climate.head())
-
-
-# So it looks like my lambda apply didnt save, so lets run that again really quick.
-climate[['fog', 'thunder', 'sleet', 'hail', 'rime', 
-         'high_winds', 'drizzle', 'rain']] = \
-             climate[['fog', 'thunder', 'sleet', 'hail', 
-                      'rime','high_winds', 'drizzle', 'rain']]\
-                          .apply([lambda x: 1 if x == True else 0])
-# print(climate.head())
-# Okay that is fixed. Need to make the features and labels now. 
+# print(climate_write.head())
 
 
 
 # le = LabelEncoder()
 # encoded = le.fit_transform()
-features = climate[['year', 'month', 'day', 'max_temp',
-                    'min_temp', 'fog', 'thunder', 'rime',
-                    'high_winds']].to_numpy()
+features = climate_write[['year', 'month', 'day', 'max_temp',
+                    'min_temp']].to_numpy()
 
-labels = tf_precipitation.to_numpy()
+labels = climate_write.total_precipitation.to_numpy()
 
 features_shape = features.shape
+
+
+minmax = MinMaxScaler()
 
 train_data, test_data, train_labels, test_labels = \
     train_test_split(features, labels, test_size = 0.2)
     
-minmax = MinMaxScaler()
-minmax.fit_transform(train_data, train_labels)
+   
+# train_labels = minmax.fit_transform(train_labels)
+# test_labels = minmax.transform(test_labels)    git p
+train_data = train_data.astype('float32')
+test_data = test_data.astype('float32')
+train_labels = train_labels.astype('float32')
+test_labels = test_labels.astype('float32')
+# train_data = tf.convert_to_tensor(train_data)
+print(train_labels)
+opt = Adam(learning_rate = 0.001)
+
+# print(Counter(climate_write.total_precipitation))
 inp = keras.Input(shape = (features_shape))
 model = Sequential()
 model.add(Dense(8, activation = 'relu'))
-model.add(Dense(8, activation = 'sigmoid'))
+model.add(Dense(2, activation = 'relu'))
+model.compile(optimizer = opt, loss = 'mse', metrics = ['accuracy'])
 
+model.fit(train_data, train_labels, verbose = 1, epochs = 12, batch_size = 100)
+
+print(model.predict(test_data))
